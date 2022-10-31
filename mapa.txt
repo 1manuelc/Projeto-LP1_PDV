@@ -1,0 +1,22 @@
+typedef struct {
+    int dia;
+    int mes;
+    int ano;
+}Valid;
+
+typedef struct {
+    char nome[12];
+    float preco;
+    float quantidade;
+    int codigo;
+    char undMed[10];
+    Valid validade;
+}Produto;
+
+Arquivos txt:
+    log-pdv-nomes.txt
+    log-pdv-precos.txt
+    log-pdv-quantidades.txt
+    log-pdv-codigos.txt
+    log-pdv-undmeds.txt
+    log-pdv-validades.txt   (separado por \t entre campos)

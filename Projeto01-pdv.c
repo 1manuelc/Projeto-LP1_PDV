@@ -10,7 +10,7 @@ typedef struct {
 
 typedef struct {
     char nome[12];
-    float valor;
+    float preco;
     float quantidade;
     int codigo;
     char undMed[10];
@@ -18,19 +18,17 @@ typedef struct {
 }Produto;
 
 void pdv_cabecalho();
-void pdv_cadastrar(FILE *arquivo, int *pContador, Produto *pProdutos);
-void pdv_remover(FILE *arquivo, int *pContador);
+void pdv_cadastrar(int *pContador);
+void pdv_remover(int *pContador);
 void pdv_alterar();
-void pdv_exibir(Produto *pProdutos, int *pContador);
+void pdv_exibir(int *pContador);
 void pdv_buscar();
-void pdv_atualizar(FILE *arquivo, int *pContador, Produto *pProdutos);
-void pdv_sair(Produto *pProdutos, int *pContador);
+void pdv_atualizar(int *pContador);
+void pdv_sair(int *pContador);
 void pdv_erro();
 void flush_in();
 
 int main() {
-    FILE *arquivo;
-    Produto *pProdutos;
     int *pContador, contador = 0;
     pContador = &contador;
 
@@ -42,7 +40,7 @@ int main() {
         flush_in();
         switch(digito) {
             case 1: /* cadastrar */ {
-                pdv_cadastrar(arquivo, pContador, pProdutos);
+                pdv_cadastrar(pContador);
                 break;
             }
             case 2: /* remover */ {
@@ -52,7 +50,7 @@ int main() {
                 break;
             }
             case 4: /* exibir */ {
-                pdv_exibir(pProdutos, pContador);
+                pdv_exibir(pContador);
                 system("pause");
                 system("cls");
                 break;
@@ -61,11 +59,11 @@ int main() {
                 break;
             }
             case 6: /* atualizar */ {
-                pdv_atualizar(arquivo, pContador, pProdutos);
+                pdv_atualizar(pContador);
                 break;
             }
             case 7: /*sair*/ {
-                pdv_sair(pProdutos, pContador);
+                pdv_sair(pContador);
                 break;
             }
             default: /* erro */ {
@@ -93,62 +91,70 @@ void pdv_cabecalho() {
     printf("(7) - Para sair do programa\n\n");
 }
 
-void pdv_cadastrar(FILE *arquivo, int *pContador, Produto *pProdutos) {
+void pdv_cadastrar(int *pContador) {
     system("cls");
     printf("\x1b[36m" " [ CADASTRO DE PRODUTO ] \n" "\x1b[0m");
-    
+    FILE *arquivo;
     Produto pdv;
-    arquivo = fopen("log-pdv.txt", "a+");
 
-    if(arquivo == NULL) {
-    printf("Erro ao ler arquivo!");
-    } else {
     do {
+        arquivo = fopen("logs/log-pdv-nomes.txt", "a+");
         printf("\nDigite o nome do produto: ");
         scanf("%[^\n]", pdv.nome);
-        fprintf(arquivo, "%s\t", pdv.nome);
-
+        fprintf(arquivo, "%s\n", pdv.nome);
+        fclose(arquivo);
         flush_in();
+
+        arquivo = fopen("logs/log-pdv-quantidades.txt", "a+");
         printf("Digite a quantidade do produto: ");
         scanf("%f", &pdv.quantidade);
-        fprintf(arquivo, "%f\t", pdv.quantidade);
-
+        fprintf(arquivo, "%f\n", pdv.quantidade);
+        fclose(arquivo);
         flush_in();
+
+        arquivo = fopen("logs/log-pdv-undmeds.txt", "a+");
         printf("Digite a unidade de medida do produto: ");
-        scanf("%[^\n]", &pdv.undMed);
-
+        scanf("%[^\n]", pdv.undMed);
+        fprintf(arquivo, "%s\n", pdv.undMed);
+        fclose(arquivo);
         flush_in();
+
+        arquivo = fopen("logs/log-pdv-precos.txt", "a+");
         printf("Digite o preco do produto: ");
-        scanf("%f", &pdv.valor);
-        fprintf(arquivo, "%s\t%.2f\t", pdv.undMed, pdv.valor);
-
+        scanf("%f", &pdv.preco);
+        fprintf(arquivo, "%f\n", pdv.preco);
+        fclose(arquivo);
         flush_in();
+
+        arquivo = fopen("logs/log-pdv-validades.txt", "a+");
         printf("Digite a validade do produto(dd mm aaaa): ");
         scanf("%d %d %d", &pdv.validade.dia, &pdv.validade.mes, &pdv.validade.ano);
-        fprintf(arquivo, "%d\t%d\t%d\t", pdv.validade.dia, pdv.validade.mes, pdv.validade.ano);
-
+        fprintf(arquivo, "%d\t%d\t%d\n", pdv.validade.dia, pdv.validade.mes, pdv.validade.ano);
+        fclose(arquivo);
         flush_in();
+
+        arquivo = fopen("logs/log-pdv-codigos.txt", "a+");
         printf("Digite o codigo do produto: ");
         scanf("%d", &pdv.codigo);
-        fprintf(arquivo, "%d", pdv.codigo);
+        fprintf(arquivo, "%d\n", pdv.codigo);
+        fclose(arquivo);
         flush_in();
-        
-        fprintf(arquivo, "\n");      
 
         printf("\e[0;32m" "\n\nProduto cadastrado com sucesso\nDeseja cadastrar outro produto? (s/n): " "\x1b[0m");
 
         } while(getch() == 's');
-        system("cls");        
-    } fclose(arquivo);
+        system("cls");
 }
 
-void pdv_exibir(Produto *pProdutos, int *pContador) {
-    for(int i = 0; i < *pContador; i++)
-            printf("    [%d]    Produto: %s    Qtd: %f/%s R$ %f	%d/%d/%d	%d\n", i, pProdutos[i].nome, pProdutos[i].quantidade, pProdutos[i].undMed, pProdutos[i].valor, pProdutos[i].validade.dia, pProdutos[i].validade.mes, pProdutos[i].validade.ano, pProdutos[i].codigo);
+void pdv_exibir(int *pContador) {
+    for(int i = 0; i < *pContador; i++) {
+        printf("    [%d]    \n", i);
+    } /* falta implementar impressao dos elementos de Produto */
 }
 
-void pdv_atualizar(FILE *arquivo, int *pContador, Produto *pProdutos) {
-    arquivo = fopen("log-pdv.txt", "r");
+void pdv_atualizar(int *pContador) {
+    FILE *arquivo;
+    arquivo = fopen("logs/log-pdv-undmeds.txt", "r");
         char ch;
         int contador = 0;
         if(arquivo) {
@@ -157,22 +163,15 @@ void pdv_atualizar(FILE *arquivo, int *pContador, Produto *pProdutos) {
                 if(ch == '\n')
                     contador++;
             }
-        } 
-        *pContador = contador;
-
-        pProdutos = (Produto*)calloc(*pContador, sizeof(Produto));
-        
-        for(int i = 0; i < *pContador; i++) {
-            fscanf(arquivo, "%s\t%f\t%s\t%f\t%d\t%d\t%d\t%d\n", pProdutos[i].nome, &pProdutos[i].quantidade, pProdutos[i].undMed, &pProdutos[i].valor, &pProdutos[i].validade.dia, &pProdutos[i].validade.mes, &pProdutos[i].validade.ano, &pProdutos[i].codigo);
         }
-
     fclose(arquivo);
+    *pContador = contador;
+
     system("cls");
     printf("\e[0;32m" "  [ BASE DE DADOS ATUALIZADA ] \n" "\x1b[0m");
 }
 
-void pdv_sair(Produto *pProdutos, int *pContador) {
-    free(pProdutos);
+void pdv_sair(int *pContador) {
     free(pContador);
     system("cls");
     printf("\x1b[36m" "\nObrigado por usar nosso programa\nAte a proxima!\n\n" "\x1b[0m");
