@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <conio.h>
+#ifdef _WIN32
+# define TELA_LIMPAR system("cls")
+#else
+# define TELA_LIMPAR puts("\x1b[H\x1b[2J")
+#endif
+# define TELA_PAUSAR printf("Digite enter para continuar..."); getchar();
 
 typedef struct {
     int dia;
@@ -40,7 +45,7 @@ void pdv_cabecalho(int quant) {
 }
 
 int pdv_cadastrar(Produto **produtos, int quant, int tam) {
-    system("cls");
+    TELA_LIMPAR;
 
     printf("\x1b[36m" "Cadastro de Produto\n\n" "\x1b[0m");
     
@@ -75,11 +80,11 @@ int pdv_cadastrar(Produto **produtos, int quant, int tam) {
         printf("\nImpossivel novo cadastro, memoria cheia!");
         return 0;
     }
-    system("cls");
+    TELA_LIMPAR;
 }
 
 void pdv_exibir(Produto **produtos, int quant) {
-    system("cls");
+    TELA_LIMPAR;
     printf("\x1b[36m""\nLista de Produtos\n""\x1b[0m");
 
     printf("\n_________________________________________________________________________________________________________________\n\n");
@@ -97,7 +102,7 @@ void pdv_exibir(Produto **produtos, int quant) {
 }
 
 void pdv_alterar(Produto **produtos, int quant) {
-    system("cls");
+    TELA_LIMPAR;
     pdv_exibir(produtos, quant);
 
     int id, escolha;
@@ -132,7 +137,7 @@ void pdv_alterar(Produto **produtos, int quant) {
 
         produtos[id] = novoProd;
     } else {
-        system("cls");
+        TELA_LIMPAR;
         printf("       Codigo invalido!\n");
     }
 }
@@ -156,7 +161,7 @@ void pdv_salvar(Produto **produtos, int quant, char arq[]) {
     } else
         printf("\n\tNao foi possivel abrir/criar o arquivo!\n");
     
-    system("cls");
+    TELA_LIMPAR;
     printf("    [ Base de dados salva ]\n");
 }
 
@@ -181,22 +186,21 @@ int pdv_atualizar(Produto **produtos, char arq[]) {
     } else
         printf("\n\tNao foi possivel abrir/criar arquivo!\n");
     
-    system("cls");
+    TELA_LIMPAR;
     printf("  [ Base de dados atualizada ]\n");
     return quant;
 }
 
 void pdv_erro() {
-    system("cls");
+    TELA_LIMPAR;
     printf("\x1b[31m" "       [ OPCAO INVALIDA ]       \n" "\x1b[0m");
 }
 
 void pdv_sair(Produto **produtos, int quant) {
     for(int i = 0; i < quant; i++)
         free(produtos[i]);
-    free(produtos);
 
-    system("cls");
+    TELA_LIMPAR;
     printf("\x1b[36m" "\nObrigado por usar nosso programa\nAte a proxima!\n\n" "\x1b[0m");
 }
 
@@ -220,8 +224,8 @@ int main() {
                 break;
             case 4: /*exibir*/
                 pdv_exibir(produtos, quant);
-                system("pause");
-                system("cls");
+                TELA_PAUSAR;
+                TELA_LIMPAR;
                 break;
             case 5: /*salvar arquivo*/
                 pdv_salvar(produtos, quant, arquivo);
@@ -240,6 +244,6 @@ int main() {
 
     pdv_sair(produtos, quant);
 
-    system("pause");
+    TELA_PAUSAR;
     return 0;
 }

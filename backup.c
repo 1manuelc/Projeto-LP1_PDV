@@ -48,7 +48,7 @@ int main() {
             }
             case 4: /* exibir */ {
                 pdv_exibir(pContador);
-                system("pause");
+                TELA_PAUSAR;;
                 system("cls");
                 break;
             }
@@ -172,7 +172,7 @@ void pdv_sair(int *pContador) {
     free(pContador);
     system("cls");
     printf("\x1b[36m" "\nObrigado por usar nosso programa\nAte a proxima!\n\n" "\x1b[0m");
-    system("pause");
+    TELA_PAUSAR;;
 }
 
 void pdv_erro() {
