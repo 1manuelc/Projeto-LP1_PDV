@@ -40,6 +40,8 @@ void pdv_cabecalho(int quant) {
 }
 
 int pdv_cadastrar(Produto **produtos, int quant, int tam) {
+    system("cls");
+
     printf("\x1b[36m" "Cadastro de Produto\n\n" "\x1b[0m");
     
     if(quant < tam) {
@@ -73,10 +75,11 @@ int pdv_cadastrar(Produto **produtos, int quant, int tam) {
         printf("\nImpossivel novo cadastro, memoria cheia!");
         return 0;
     }
+    system("cls");
 }
 
 void pdv_exibir(Produto **produtos, int quant) {
-
+    system("cls");
     printf("\x1b[36m""\nLista de Produtos\n""\x1b[0m");
 
     printf("\n_________________________________________________________________________________________________________________\n\n");
@@ -94,6 +97,7 @@ void pdv_exibir(Produto **produtos, int quant) {
 }
 
 void pdv_alterar(Produto **produtos, int quant) {
+    system("cls");
     pdv_exibir(produtos, quant);
 
     int id, escolha;
@@ -127,8 +131,10 @@ void pdv_alterar(Produto **produtos, int quant) {
         scanf("%d%d%d", &novoProd->validade.dia, &novoProd->validade.mes, &novoProd->validade.ano);
 
         produtos[id] = novoProd;
-    } else
-        printf("\nCodigo invalido!\n");
+    } else {
+        system("cls");
+        printf("       Codigo invalido!\n");
+    }
 }
 
 void pdv_salvar(Produto **produtos, int quant, char arq[]) {
@@ -149,6 +155,9 @@ void pdv_salvar(Produto **produtos, int quant, char arq[]) {
         }fclose(file);
     } else
         printf("\n\tNao foi possivel abrir/criar o arquivo!\n");
+    
+    system("cls");
+    printf("    [ Base de dados salva ]\n");
 }
 
 int pdv_atualizar(Produto **produtos, char arq[]) {
@@ -171,6 +180,9 @@ int pdv_atualizar(Produto **produtos, char arq[]) {
         } fclose(file);
     } else
         printf("\n\tNao foi possivel abrir/criar arquivo!\n");
+    
+    system("cls");
+    printf("  [ Base de dados atualizada ]\n");
     return quant;
 }
 
@@ -199,9 +211,7 @@ int main() {
 
         switch(opcao) {
             case 1: /*cadastrar*/
-                system("cls");
                 quant += pdv_cadastrar(produtos, quant, tam);
-                system("cls");
                 break;
             case 2: /*remover*/
                 break;
@@ -209,20 +219,15 @@ int main() {
                 pdv_alterar(produtos, quant);
                 break;
             case 4: /*exibir*/
-                system("cls");
                 pdv_exibir(produtos, quant);
                 system("pause");
                 system("cls");
                 break;
             case 5: /*salvar arquivo*/
                 pdv_salvar(produtos, quant, arquivo);
-                system("cls");
-                printf("    [ Base de dados salva ]\n");
                 break;
             case 6: /*ler arquivo*/
                 quant = pdv_atualizar(produtos, arquivo);
-                system("cls");
-                printf("  [ Base de dados atualizada ]\n");
                 break;
             case 7: /*buscar*/
                 break;
