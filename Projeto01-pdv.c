@@ -74,13 +74,14 @@ int pdv_cadastrar(Produto **produtos, int quant, int tam) {
         scanf("%d%d%d", &novoProd->validade.dia, &novoProd->validade.mes, &novoProd->validade.ano);
 
         produtos[quant] = novoProd;
-
+        TELA_LIMPAR;
+        printf("\e[0;32m" "     [ Produto cadastrado ]\n" "\x1b[0m");
         return 1;
     } else {
-        printf("\nImpossivel novo cadastro, memoria cheia!");
+        printf("\x1b[31m" "\nImpossivel novo cadastro, memoria cheia!" "\x1b[0m");
+        TELA_LIMPAR;
         return 0;
     }
-    TELA_LIMPAR;
 }
 
 void pdv_exibir(Produto **produtos, int quant) {
@@ -99,6 +100,29 @@ void pdv_exibir(Produto **produtos, int quant) {
     }
     
     printf("_________________________________________________________________________________________________________________\n\n");
+}
+
+int pdv_remover(Produto **produtos, int quant) {
+    pdv_exibir(produtos, quant);
+    int id;
+
+    printf("Escolha um produto pelo id para remover: ");
+    scanf("%d", &id);
+    id--;
+    getchar();
+
+    if(id >= 0 && id <= quant - 1) {
+        free(produtos[id]);
+        if(id <= quant - 1)
+            produtos[id] = produtos[id - 1];
+        TELA_LIMPAR;
+        printf("\e[0;32m" "      [ Produto removido ]\n" "\x1b[0m");
+        return -1;
+    } else {
+        TELA_LIMPAR;
+        printf("\x1b[31m" "        [ ID INVALIDO ]\n" "\x1b[0m");
+        return 0;
+    }
 }
 
 void pdv_alterar(Produto **produtos, int quant) {
@@ -138,7 +162,7 @@ void pdv_alterar(Produto **produtos, int quant) {
         produtos[id] = novoProd;
     } else {
         TELA_LIMPAR;
-        printf("       Codigo invalido!\n");
+        printf("\x1b[31m" "      [ Codigo invalido ]\n" "\x1b[0m");
     }
 }
 
@@ -218,9 +242,11 @@ int main() {
                 quant += pdv_cadastrar(produtos, quant, tam);
                 break;
             case 2: /*remover*/
+                quant += pdv_remover(produtos, quant);
                 break;
             case 3: /*alterar*/
                 pdv_alterar(produtos, quant);
+                TELA_LIMPAR;
                 break;
             case 4: /*exibir*/
                 pdv_exibir(produtos, quant);
