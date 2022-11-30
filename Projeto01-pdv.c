@@ -1,32 +1,98 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
 #ifdef _WIN32
 # define TELA_LIMPAR system("cls")
 #else
 # define TELA_LIMPAR puts("\x1b[H\x1b[2J")
 #endif
-# define TELA_PAUSAR printf("Digite enter para continuar..."); getchar();
 
-typedef struct {
+# define TELA_PAUSAR printf("Digite enter para continuar..."); getchar();
+# define ANSI_VERDE "\e[0;32m"
+# define ANSI_AZUL "\x1b[36m"
+# define ANSI_VERMELHO "\x1b[31m"
+# define ANSI_RESET "\x1b[0m"
+
+typedef struct valid Valid;
+typedef struct produto Produto;
+
+struct valid {
     int dia;
     int mes;
     int ano;
-}Valid;
+};
 
-typedef struct {
+struct produto {
     char nome[20];
     float preco;
     float quantidade;
     int codigo;
     char undMed[5];
     Valid validade;
-}Produto;
+};
 
-/* FALTA pdv_remover e pdv_buscar */
+void pdv_cabecalho(int quant);
+int pdv_cadastrar(Produto **produtos, int quant, int tam);
+void pdv_exibir(Produto **produtos, int quant);
+int pdv_remover(Produto **produtos, int quant);
+void pdv_alterar(Produto **produtos, int quant);
+void pdv_salvar(Produto **produtos, int quant, char arq[]);
+int pdv_atualizar(Produto **produtos, char arq[]);
+void pdv_buscar(Produto **produtos, int quant, int tam);
+void pdv_erro();
+void pdv_sair(Produto **produtos, int quant);
+
+int main() {
+    int opcao, quant = 0, tam = 100;
+    Produto *produtos[tam];
+    char arquivo[] = {"pdv-log.txt"};
+    do {
+        pdv_cabecalho(quant);
+        scanf("%d", &opcao);
+        getchar();
+
+        switch(opcao) {
+            case 1: /*cadastrar*/
+                quant += pdv_cadastrar(produtos, quant, tam);
+                break;
+            case 2: /*remover*/
+                quant += pdv_remover(produtos, quant);
+                break;
+            case 3: /*alterar*/
+                pdv_alterar(produtos, quant);
+                TELA_LIMPAR;
+                break;
+            case 4: /*exibir*/
+                pdv_exibir(produtos, quant);
+                TELA_PAUSAR;
+                TELA_LIMPAR;
+                break;
+            case 5: /*salvar arquivo*/
+                pdv_salvar(produtos, quant, arquivo);
+                break;
+            case 6: /*ler arquivo*/
+                quant = pdv_atualizar(produtos, arquivo);
+                break;
+            case 7: /*buscar*/
+                pdv_buscar(produtos, quant, tam);
+                break;
+            default:
+                if(opcao != 0) {
+                    pdv_erro();
+                }
+        }
+    }while(opcao != 0);
+
+    pdv_sair(produtos, quant);
+
+    TELA_PAUSAR;
+    return 0;
+}
 
 void pdv_cabecalho(int quant) {
     if(quant != 0)
-        printf("\e[0;32m" "     %d produtos no sistema\n" "\x1b[0m", quant);
+        printf(ANSI_VERDE "     %d produtos no sistema\n" ANSI_RESET, quant);
     else
         printf("     %d produtos no sistema\n", quant);
     printf("- - - - - - - - - - - - - - - -\n");
@@ -47,7 +113,7 @@ void pdv_cabecalho(int quant) {
 int pdv_cadastrar(Produto **produtos, int quant, int tam) {
     TELA_LIMPAR;
 
-    printf("\x1b[36m" "Cadastro de Produto\n\n" "\x1b[0m");
+    printf(ANSI_AZUL "Cadastro de Produto\n\n" ANSI_RESET);
     
     if(quant < tam) {
         Produto *novoProd = (Produto*)malloc(sizeof(Produto));
@@ -75,18 +141,235 @@ int pdv_cadastrar(Produto **produtos, int quant, int tam) {
 
         produtos[quant] = novoProd;
         TELA_LIMPAR;
-        printf("\e[0;32m" "     [ Produto cadastrado ]\n" "\x1b[0m");
+        printf(ANSI_VERDE "     [ Produto cadastrado ]\n" ANSI_RESET);
         return 1;
     } else {
-        printf("\x1b[31m" "\nImpossivel novo cadastro, memoria cheia!" "\x1b[0m");
+        printf(ANSI_VERMELHO "\nImpossivel novo cadastro, memoria cheia!" ANSI_RESET);
         TELA_LIMPAR;
         return 0;
     }
 }
 
+void pdv_buscar(Produto **produtos, int quant, int tam) {
+    TELA_LIMPAR;
+    int opcao, ocorrencias = 0;
+
+    Produto *buscaProd = (Produto*)malloc(sizeof(Produto));
+
+    do {
+        ocorrencias = 0;
+        printf(ANSI_AZUL "Deseja pesquisar por:\n" ANSI_RESET);
+        printf("(0) - Sair\n");
+        printf("(1) - Nome\n");
+        printf("(2) - Unidade de medida\n");
+        printf("(3) - Preco\n");
+        printf("(4) - Quantidade em estoque\n");
+        printf("(5) - Validade\n");
+        printf("(6) - Codigo\n");
+            scanf("%d", &opcao);
+            getchar();
+
+        switch(opcao) {
+            case 1:
+                    TELA_LIMPAR;
+                    printf("Digite o nome: ");
+                    scanf("%20[^\n]", buscaProd->nome);
+                    getchar();
+
+                    printf("\n_________________________________________________________________________________________________________________\n\n");
+
+                    for(int i = 0; i < quant; i++) {
+                        if(strcmp(buscaProd->nome, produtos[i]->nome) == 0) {
+                            printf("[%d] - ", i + 1);
+                            printf(ANSI_VERDE "Nome: %s\t" ANSI_RESET, produtos[i]->nome);
+                            printf("Valor/%s: R$ %.2f\t", produtos[i]->undMed, produtos[i]->preco);
+                            printf("Estoque: %.0f%s\t", produtos[i]->quantidade, produtos[i]->undMed);
+                            printf("Validade: %d/%d/%d\t", produtos[i]->validade.dia, produtos[i]->validade.mes, produtos[i]->validade.ano);
+                            printf("Codigo: %d\n\n", produtos[i]->codigo);
+                            ocorrencias++;
+                        } 
+                    }
+
+                    if(ocorrencias == 0)
+                                printf(ANSI_VERMELHO "%d ocorrencias encontradas\n" ANSI_RESET, ocorrencias);
+                    else
+                        printf(ANSI_VERDE "%d ocorrencias encontradas\n" ANSI_RESET, ocorrencias);
+                    
+                    printf("\n_________________________________________________________________________________________________________________\n\n");
+                    
+                    TELA_PAUSAR;
+                    TELA_LIMPAR;
+                break;
+            case 2:
+                    TELA_LIMPAR;
+                    printf("Digite a unidade de medida: ");
+                    scanf("%5[^\n]", buscaProd->undMed);
+                    getchar();
+
+                    printf("\n_________________________________________________________________________________________________________________\n\n");
+
+                    for(int i = 0; i < quant; i++) {
+                        if(strcmp(buscaProd->undMed, produtos[i]->undMed) == 0) {
+                            printf("[%d] - ", i + 1);
+                            printf("Nome: %s\t", produtos[i]->nome);
+                            printf("Valor/" ANSI_VERDE "%s" ANSI_RESET ": R$ %.2f\t", produtos[i]->undMed, produtos[i]->preco);
+                            printf("Estoque: %.0f%s\t", produtos[i]->quantidade, produtos[i]->undMed);
+                            printf("Validade: %d/%d/%d\t", produtos[i]->validade.dia, produtos[i]->validade.mes, produtos[i]->validade.ano);
+                            printf("Codigo: %d\n\n", produtos[i]->codigo);
+                            ocorrencias++;
+                        }
+                    }
+
+                    if(ocorrencias == 0)
+                                printf(ANSI_VERMELHO "%d ocorrencias encontradas\n" ANSI_RESET, ocorrencias);
+                    else
+                        printf(ANSI_VERDE "%d ocorrencias encontradas\n" ANSI_RESET, ocorrencias);
+                    
+                    printf("\n_________________________________________________________________________________________________________________\n\n");
+
+                    TELA_PAUSAR;
+                    TELA_LIMPAR;
+                break;
+            case 3:
+                    TELA_LIMPAR;
+                    printf("Digite o preco: ");
+                    scanf("%f", &buscaProd->preco);
+                    getchar();
+
+                    printf("\n_________________________________________________________________________________________________________________\n\n");
+
+                    for(int i = 0; i < quant; i++) {
+                        if(buscaProd->preco == produtos[i]->preco) {
+                            printf("[%d] - ", i + 1);
+                            printf("Nome: %s\t", produtos[i]->nome);
+                            printf("Valor/%s: " ANSI_VERDE "R$ %.2f\t" ANSI_RESET, produtos[i]->undMed, produtos[i]->preco);
+                            printf("Estoque: %.0f%s\t", produtos[i]->quantidade, produtos[i]->undMed);
+                            printf("Validade: %d/%d/%d\t", produtos[i]->validade.dia, produtos[i]->validade.mes, produtos[i]->validade.ano);
+                            printf("Codigo: %d\n\n", produtos[i]->codigo);
+                            ocorrencias++;
+                        }
+                    }
+                    
+                    if(ocorrencias == 0)
+                                printf(ANSI_VERMELHO "%d ocorrencias encontradas\n" ANSI_RESET, ocorrencias);
+                    else
+                        printf(ANSI_VERDE "%d ocorrencias encontradas\n" ANSI_RESET, ocorrencias);
+
+                    printf("\n_________________________________________________________________________________________________________________\n\n");
+                    
+                    TELA_PAUSAR;
+                    TELA_LIMPAR;
+                break;
+            case 4:
+                    TELA_LIMPAR;
+
+                    printf("Digite a quantidade em estoque: ");
+                    scanf("%f", &buscaProd->quantidade);
+                    getchar();
+                    
+                    printf("\n_________________________________________________________________________________________________________________\n\n");
+
+                    for(int i = 0; i < quant; i++) {
+                        if(buscaProd->quantidade == produtos[i]->quantidade) {
+                            printf("[%d] - ", i + 1);
+                            printf("Nome: %s\t", produtos[i]->nome);
+                            printf("Valor/%s: R$ %.2f\t", produtos[i]->undMed, produtos[i]->preco);
+                            printf(ANSI_VERDE "Estoque: %.0f%s\t" ANSI_RESET, produtos[i]->quantidade, produtos[i]->undMed);
+                            printf("Validade: %d/%d/%d\t", produtos[i]->validade.dia, produtos[i]->validade.mes, produtos[i]->validade.ano);
+                            printf("Codigo: %d\n\n", produtos[i]->codigo);
+                            ocorrencias++;
+                        }
+                    }
+                    
+                    if(ocorrencias == 0)
+                                printf(ANSI_VERMELHO "%d ocorrencias encontradas\n" ANSI_RESET, ocorrencias);
+                    else
+                        printf(ANSI_VERDE "%d ocorrencias encontradas\n" ANSI_RESET, ocorrencias);
+
+                    printf("\n_________________________________________________________________________________________________________________\n\n");
+                    
+                    TELA_PAUSAR;
+                    TELA_LIMPAR;
+                break;
+            case 5:
+                    TELA_LIMPAR;
+
+                    printf("Digite a validade dd mm aaaa: ");
+                    scanf("%d%d%d", &buscaProd->validade.dia, &buscaProd->validade.mes, &buscaProd->validade.ano);
+                    getchar();
+
+                    printf("\n_________________________________________________________________________________________________________________\n\n");
+
+                    for(int i = 0; i < quant; i++) {
+                        if(buscaProd->validade.dia == produtos[i]->validade.dia ||
+                        buscaProd->validade.mes == produtos[i]->validade.mes ||
+                        buscaProd->validade.ano == produtos[i]->validade.ano) {
+                            printf("[%d] - ", i + 1);
+                            printf("Nome: %s\t", produtos[i]->nome);
+                            printf("Valor/%s: R$ %.2f\t", produtos[i]->undMed, produtos[i]->preco);
+                            printf("Estoque: %.0f%s\t", produtos[i]->quantidade, produtos[i]->undMed);
+                            printf(ANSI_VERDE "Validade: %d/%d/%d\t" ANSI_RESET, produtos[i]->validade.dia, produtos[i]->validade.mes, produtos[i]->validade.ano);
+                            printf("Codigo: %d\n\n", produtos[i]->codigo);
+                            ocorrencias++;
+                        }
+                    } 
+                    
+                    if(ocorrencias == 0)
+                                printf(ANSI_VERMELHO "%d ocorrencias encontradas\n" ANSI_RESET, ocorrencias);
+                    else
+                        printf(ANSI_VERDE "%d ocorrencias encontradas\n" ANSI_RESET, ocorrencias);
+                    
+                    printf("\n_________________________________________________________________________________________________________________\n\n");
+                    
+                    TELA_PAUSAR;
+                    TELA_LIMPAR;
+                break;
+            case 6:
+                    TELA_LIMPAR;
+
+                    printf("Digite o codigo: ");
+                    scanf("%d", &buscaProd->codigo);
+                    getchar();
+
+                    printf("\n_________________________________________________________________________________________________________________\n\n");
+
+                    for(int i = 0; i < quant; i++) {
+                        if(buscaProd->codigo == produtos[i]->codigo) {
+                            printf("[%d] - ", i + 1);
+                            printf("Nome: %s\t", produtos[i]->nome);
+                            printf("Valor/%s: R$ %.2f\t", produtos[i]->undMed, produtos[i]->preco);
+                            printf("Estoque: %.0f%s\t", produtos[i]->quantidade, produtos[i]->undMed);
+                            printf("Validade: %d/%d/%d\t", produtos[i]->validade.dia, produtos[i]->validade.mes, produtos[i]->validade.ano);
+                            printf(ANSI_VERDE "Codigo: %d\n\n" ANSI_RESET, produtos[i]->codigo);
+                            ocorrencias++;
+                        }
+                    } 
+                    
+                    if(ocorrencias == 0)
+                                printf(ANSI_VERMELHO "%d ocorrencias encontradas\n" ANSI_RESET, ocorrencias);
+                    else
+                        printf(ANSI_VERDE "%d ocorrencias encontradas\n" ANSI_RESET, ocorrencias);
+                    
+                    printf("\n_________________________________________________________________________________________________________________\n\n");
+                    
+                    TELA_PAUSAR;
+                    TELA_LIMPAR;
+                break;
+            default:
+                if(opcao != 0) {
+                    printf(ANSI_VERMELHO "Opcao invalida\n" ANSI_RESET);
+                    TELA_PAUSAR;
+                }
+                break;
+        }
+    }while(opcao != 0);
+    free(buscaProd);
+    TELA_LIMPAR;
+}
+
 void pdv_exibir(Produto **produtos, int quant) {
     TELA_LIMPAR;
-    printf("\x1b[36m""\nLista de Produtos\n""\x1b[0m");
+    printf(ANSI_AZUL "\nLista de Produtos\n" ANSI_RESET);
 
     printf("\n_________________________________________________________________________________________________________________\n\n");
 
@@ -116,11 +399,11 @@ int pdv_remover(Produto **produtos, int quant) {
         if(id <= quant - 1)
             produtos[id] = produtos[id - 1];
         TELA_LIMPAR;
-        printf("\e[0;32m" "      [ Produto removido ]\n" "\x1b[0m");
+        printf(ANSI_VERDE "      [ Produto removido ]\n" ANSI_RESET);
         return -1;
     } else {
         TELA_LIMPAR;
-        printf("\x1b[31m" "        [ ID INVALIDO ]\n" "\x1b[0m");
+        printf(ANSI_VERMELHO "        [ ID INVALIDO ]\n" ANSI_RESET);
         return 0;
     }
 }
@@ -162,7 +445,7 @@ void pdv_alterar(Produto **produtos, int quant) {
         produtos[id] = novoProd;
     } else {
         TELA_LIMPAR;
-        printf("\x1b[31m" "      [ Codigo invalido ]\n" "\x1b[0m");
+        printf(ANSI_VERMELHO "      [ Codigo invalido ]\n" ANSI_RESET);
     }
 }
 
@@ -183,10 +466,10 @@ void pdv_salvar(Produto **produtos, int quant, char arq[]) {
             fprintf(file, "%d %d %d\n", produtos[i]->validade.dia, produtos[i]->validade.mes, produtos[i]->validade.ano);
         }fclose(file);
     } else
-        printf("\n\tNao foi possivel abrir/criar o arquivo!\n");
+        printf(ANSI_VERMELHO "\n\tNao foi possivel abrir/criar o arquivo!\n" ANSI_RESET);
     
     TELA_LIMPAR;
-    printf("    [ Base de dados salva ]\n");
+    printf(ANSI_VERDE "    [ Base de dados salva ]\n" ANSI_RESET);
 }
 
 int pdv_atualizar(Produto **produtos, char arq[]) {
@@ -208,16 +491,16 @@ int pdv_atualizar(Produto **produtos, char arq[]) {
             novo = malloc(sizeof(Produto));
         } fclose(file);
     } else
-        printf("\n\tNao foi possivel abrir/criar arquivo!\n");
+        printf(ANSI_VERMELHO "\n\tNao foi possivel abrir/criar arquivo!\n" ANSI_RESET);
     
     TELA_LIMPAR;
-    printf("  [ Base de dados atualizada ]\n");
+    printf(ANSI_VERDE "  [ Base de dados atualizada ]\n" ANSI_RESET);
     return quant;
 }
 
 void pdv_erro() {
     TELA_LIMPAR;
-    printf("\x1b[31m" "       [ OPCAO INVALIDA ]       \n" "\x1b[0m");
+    printf(ANSI_VERMELHO "       [ OPCAO INVALIDA ]       \n" ANSI_RESET);
 }
 
 void pdv_sair(Produto **produtos, int quant) {
@@ -225,51 +508,5 @@ void pdv_sair(Produto **produtos, int quant) {
         free(produtos[i]);
 
     TELA_LIMPAR;
-    printf("\x1b[36m" "\nObrigado por usar nosso programa\nAte a proxima!\n\n" "\x1b[0m");
-}
-
-int main() {
-    int opcao, quant = 0, tam = 100;
-    Produto *produtos[tam];
-    char arquivo[] = {"pdv-log.txt"};
-    do {
-        pdv_cabecalho(quant);
-        scanf("%d", &opcao);
-        getchar();
-
-        switch(opcao) {
-            case 1: /*cadastrar*/
-                quant += pdv_cadastrar(produtos, quant, tam);
-                break;
-            case 2: /*remover*/
-                quant += pdv_remover(produtos, quant);
-                break;
-            case 3: /*alterar*/
-                pdv_alterar(produtos, quant);
-                TELA_LIMPAR;
-                break;
-            case 4: /*exibir*/
-                pdv_exibir(produtos, quant);
-                TELA_PAUSAR;
-                TELA_LIMPAR;
-                break;
-            case 5: /*salvar arquivo*/
-                pdv_salvar(produtos, quant, arquivo);
-                break;
-            case 6: /*ler arquivo*/
-                quant = pdv_atualizar(produtos, arquivo);
-                break;
-            case 7: /*buscar*/
-                break;
-            default:
-                if(opcao != 0) {
-                    pdv_erro();
-                }
-        }
-    }while(opcao != 0);
-
-    pdv_sair(produtos, quant);
-
-    TELA_PAUSAR;
-    return 0;
+    printf(ANSI_AZUL "\nObrigado por usar nosso programa\nAte a proxima!\n\n" ANSI_RESET);
 }
